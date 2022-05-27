@@ -19,6 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * See the COPYING file in the main directory for details.
  */
+/*
+ * Modified UHDDevice::parse_dev_type() to include USRP B205 Mini
+*/
+
 
 #include <uhd/version.hpp>
 #include <uhd/property_tree.hpp>
@@ -266,7 +270,7 @@ bool UHDDevice::parse_dev_type()
 	mboard_str = usrp_dev->get_mboard_name();
 
 	usrp2_str = dev_str.find("USRP2");
-	b200_str = mboard_str.find("B200");
+	b200_str = mboard_str.find("B205mini");
 	b210_str = mboard_str.find("B210");
 	x300_str = mboard_str.find("X300");
 	x310_str = mboard_str.find("X310");

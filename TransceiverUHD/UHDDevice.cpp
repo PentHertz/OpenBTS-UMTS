@@ -4,6 +4,7 @@
  *
  * Copyright 2010-2011 Free Software Foundation, Inc.
  * Copyright 2014 Ettus Research LLC
+ * Patched by FlUxIuS @ Penthertz SAS
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +27,7 @@
 
 #include <uhd/version.hpp>
 #include <uhd/property_tree.hpp>
-#include <uhd/utils/thread_priority.hpp>
-#include <uhd/utils/msg.hpp>
+#include <uhd/utils/thread.hpp>
 
 #include "Threads.h"
 #include "Logger.h"
@@ -86,11 +86,12 @@ static struct uhd_dev_offset uhd_offsets[NUM_USRP_TYPES] = {
 	{ B2XX,  99 },
 	{ X300,  73 },
 	{ UMTRX, 0 },
+	{ LimeSDRUSB, 50 }, // picked from http://swigerco.com/UHDDevice.cpp.diff
 };
 
 static int get_dev_offset(enum uhd_dev_type type)
 {
-	if ((type != B2XX) && (type != USRP2) && (type != X300)) {
+	if ((type != B2XX) && (type != USRP2) && (type != X300) && (type != LimeSDRUSB)) {
 		LOG(ALERT) << "Unsupported device type";
 		return 0;
 	}
@@ -111,28 +112,6 @@ static void *async_event_loop(UHDDevice *dev)
 	}
 
 	return NULL;
-}
-
-/* 
- * Catch and drop underrun 'U' and overrun 'O' messages from stdout
- * since we already report using the logging facility. Direct
- * everything else appropriately.
- */
-void uhd_msg_handler(uhd::msg::type_t type, const std::string &msg)
-{
-	switch (type) {
-	case uhd::msg::status:
-		LOG(INFO) << msg;
-		break;
-	case uhd::msg::warning:
-		LOG(WARNING) << msg;
-		break;
-	case uhd::msg::error:
-		LOG(ERR) << msg;
-		break;
-	case uhd::msg::fastpath:
-		break;
-	}
 }
 
 static void thread_enable_cancel(bool cancel)
@@ -261,33 +240,41 @@ double UHDDevice::setRxGain(double db)
  */
 bool UHDDevice::parse_dev_type()
 {
-	std::string mboard_str, dev_str;
-	uhd::property_tree::sptr prop_tree;
-	size_t usrp2_str, b200_str, b210_str, x300_str, x310_str;
 
-	prop_tree = usrp_dev->get_device()->get_tree();
-	dev_str = prop_tree->access<std::string>("/name").get();
-	mboard_str = usrp_dev->get_mboard_name();
+        std::string mboard_str, dev_str;
+        uhd::property_tree::sptr prop_tree;
+        size_t usrp2_str, b200_str, b210_str, x300_str, x310_str, b205mini_str, LimeSDRUSB_str;
 
-	usrp2_str = dev_str.find("USRP2");
-	b200_str = mboard_str.find("B205mini");
-	b210_str = mboard_str.find("B210");
-	x300_str = mboard_str.find("X300");
-	x310_str = mboard_str.find("X310");
+        prop_tree = usrp_dev->get_device()->get_tree();
+        dev_str = prop_tree->access<std::string>("/name").get();
+        mboard_str = usrp_dev->get_mboard_name();
 
-	if (b200_str != std::string::npos) {
-		dev_type = B2XX;
-	} else if (b210_str != std::string::npos) {
-		dev_type = B2XX;
-	} else if (usrp2_str != std::string::npos) {
-		dev_type = USRP2;
-	} else if (x300_str != std::string::npos) {
-		dev_type = X300;
-	} else if (x310_str != std::string::npos) {
-		dev_type = X300;
-	} else {
-		goto nosupport;
-	}
+        usrp2_str = dev_str.find("USRP2");
+        b200_str = mboard_str.find("B200");
+        b205mini_str = mboard_str.find("B205mini");
+        b210_str = mboard_str.find("B210");
+        x300_str = mboard_str.find("X300");
+        x310_str = mboard_str.find("X310");
+	LimeSDRUSB_str = mboard_str.find("LimeSDR");
+
+        if (b200_str != std::string::npos) {
+                dev_type = B2XX;
+        } else if (b205mini_str != std::string::npos) {
+                dev_type = B2XX;
+        } else if (b210_str != std::string::npos) {
+                dev_type = B2XX;
+        } else if (usrp2_str != std::string::npos) {
+                dev_type = USRP2;
+        } else if (x300_str != std::string::npos) {
+                dev_type = X300;
+        } else if (x310_str != std::string::npos) {
+                dev_type = X300;
+        } else if (LimeSDRUSB_str != std::string::npos) {
+		dev_type = LimeSDRUSB;
+ 	} else {
+                goto nosupport;
+        }
+
 
 	tx_window = TX_WINDOW_FIXED;
 	LOG(INFO) << "Using fixed transmit window for "
@@ -413,9 +400,6 @@ bool UHDDevice::start()
 	}
 
 	setPriority();
-
-	/* Register msg handler */
-	uhd::msg::register_handler(&uhd_msg_handler);
 
 	/* Start receive streaming */
 	if (!restart())

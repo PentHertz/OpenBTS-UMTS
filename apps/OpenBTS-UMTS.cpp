@@ -260,7 +260,8 @@ int main(int argc, char *argv[])
 
 	struct sockaddr_un cmdSockName;
 	cmdSockName.sun_family = AF_UNIX;
-	const char* sockpath = gConfig.getStr("CLI.SocketPath").c_str();
+	string s_sockpath = gConfig.getStr("CLI.SocketPath");
+	const char* sockpath = s_sockpath.c_str();
 	char rmcmd[strlen(sockpath)+5];
 	sprintf(rmcmd,"rm -f %s",sockpath);
 	if (system(rmcmd)) {}	// The 'if' shuts up gcc warnings.

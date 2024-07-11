@@ -20,6 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * See the COPYING file in the main directory for details.
  */
+/*
+ * Modified UHDDevice::parse_dev_type() to include USRP B205 Mini
+*/
+
 
 #include <uhd/version.hpp>
 #include <uhd/property_tree.hpp>
@@ -236,6 +240,7 @@ double UHDDevice::setRxGain(double db)
  */
 bool UHDDevice::parse_dev_type()
 {
+
         std::string mboard_str, dev_str;
         uhd::property_tree::sptr prop_tree;
         size_t usrp2_str, b200_str, b210_str, x300_str, x310_str, b205mini_str, LimeSDRUSB_str;
@@ -269,6 +274,7 @@ bool UHDDevice::parse_dev_type()
  	} else {
                 goto nosupport;
         }
+
 
 	tx_window = TX_WINDOW_FIXED;
 	LOG(INFO) << "Using fixed transmit window for "

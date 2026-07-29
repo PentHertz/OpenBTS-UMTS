@@ -322,10 +322,10 @@ bool Transceiver::driveTransmitPriorityQueue()
   signed char *bufferItr = (signed char *) (buffer+3);
 
   while (itr < newBurst.end()) {
-    *itr++ = complex((int) *bufferItr, 
+    *itr++ = fcomplex((int) *bufferItr, 
 		     (int) *(bufferItr+1));
     bufferItr++; bufferItr++;
-    //if ((frameNum % 100) == 0) LOG(INFO) << complex((int) *bufferItr, (int) *(bufferItr+1));
+    //if ((frameNum % 100) == 0) LOG(INFO) << fcomplex((int) *bufferItr, (int) *(bufferItr+1));
     //bufferItr+=2;
   }
 

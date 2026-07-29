@@ -92,7 +92,7 @@ signalVector::iterator itr = inverseCICFilter->begin();
 inverseCICFilter->isRealOnly(true);
 inverseCICFilter->setSymmetry(ABSSYM);
 for (int i = 0; i < FILTLEN; i++)
-  *itr++ = complex(invFilt[i],0.0);
+  *itr++ = fcomplex(invFilt[i],0.0);
 txHistoryVector = new signalVector(FILTLEN-1);
 
 rcvInverseCICFilter = new signalVector(FILTLEN);
@@ -101,7 +101,7 @@ itr = rcvInverseCICFilter->begin();
 rcvInverseCICFilter->isRealOnly(true);
 rcvInverseCICFilter->setSymmetry(ABSSYM);
 for (int i = 0; i < FILTLEN; i++)
-  *itr++ = complex(invFiltRcv[i],0.0);
+  *itr++ = fcomplex(invFiltRcv[i],0.0);
 rxHistoryVector = new signalVector(FILTLEN-1);
 
 
@@ -325,7 +325,7 @@ void RadioModem::generateRACHMessagePilots(int filtLen)
 	signalVector RACHpilot(filtLen);
         signalVector::iterator itr = RACHpilot.begin();
         for (unsigned i = 0; i < RACHpilot.size(); i++)
-          *itr++ = complex(IBurst[i+mRACHPilotsOffset],QBurst[i+mRACHPilotsOffset]);
+          *itr++ = fcomplex(IBurst[i+mRACHPilotsOffset],QBurst[i+mRACHPilotsOffset]);
         mRACHMessagePilotWaveforms[slot] = reverseConjugate(&RACHpilot);
 
 	delete[] IBurst;
@@ -371,7 +371,7 @@ signalVector*  RadioModem::UplinkPilotWaveforms(int scramblingCode, int codeInde
 	signalVector::iterator itr = pilotChips.begin();
 	// FIXME: need to specify correlation size here
 	for (unsigned i = 0; i < seqSz; i++) 
-	  *itr++ = complex(Iside[i+384],Qside[i+384]);
+	  *itr++ = fcomplex(Iside[i+384],Qside[i+384]);
         newPilots[slot] = reverseConjugate(&pilotChips);
 	delete[] Iside;
 	delete[] Qside;
@@ -408,7 +408,7 @@ void RadioModem::generateRACHPreambleTable(int startIx, int filtLen)
     signalVector::iterator RACHmodBurstItr = RACHmodBurst.begin();
     for (int i = startIx; i < startIx+filtLen; i++) {
       float arg = ((float) M_PI/4.0F) + ((float) M_PI/2.0F) * (float) (i % 4);
-      *RACHmodBurstItr = complex((float) RACHIside[i]*cos(arg),(float) RACHIside[i]*sin(arg));
+      *RACHmodBurstItr = fcomplex((float) RACHIside[i]*cos(arg),(float) RACHIside[i]*sin(arg));
       RACHmodBurstItr++;
     }
     delete[] RACHIside;
@@ -474,7 +474,7 @@ float RadioModem::estimateChannel(signalVector *wBurst,
 				 signalVector *matchedFilter,
 				 unsigned maxTOA,
 				 unsigned startTOA,
-				 complex *channel,
+				 fcomplex *channel,
 			         float *TOA) 
 {
     signalVector correlatedPilots(maxTOA);
@@ -593,7 +593,7 @@ signalVector* RadioModem::descramble(signalVector &wBurst, int8_t *codeI, int8_t
   signalVector::iterator retItr = retVec->begin();
 
   for (unsigned int i = 0; i < wBurst.size(); i++) {
-    *retItr++ = *wBurstItr++ * complex(*codeI++,- *codeQ++);
+    *retItr++ = *wBurstItr++ * fcomplex(*codeI++,- *codeQ++);
   }
   return retVec;
 }
@@ -659,7 +659,7 @@ bool RadioModem::detectRACHPreamble(signalVector &wBurst, UMTS::Time wTime, floa
     float SNR;
     for (int j = 0; j < 16;j++) {
       if (!mRACHSignatureMask[j]) continue;
-      complex channel;
+      fcomplex channel;
       float TOA;
       SNR = estimateChannel(&wBurst,mRACHTable[j],mRACHSearchSize,mRACHPreambleOffset,&channel,&TOA);
       TOA -= mRACHPreambleOffset;
@@ -726,7 +726,7 @@ bool RadioModem::decodeRACHMessage(signalVector &wBurst, UMTS::Time wTime, float
 	// correlate pilots on Q-channel for slot
 	// use precomputed RACHpilots, which should include scrambling and spreading
 	int slotIx = (wTime.TN() + gFrameSlots -mNextRACHMessageStart.TN()) % gFrameSlots;	
-        complex channel;
+        fcomplex channel;
         float TOA;
 	float SNR = estimateChannel(&wBurst,mRACHMessagePilotWaveforms[slotIx],40,mRACHPilotsOffset+mExpectedRACHTOA-20.0,&channel,&TOA);
  	const float idealCorrelationAmplitude = 2*mRACHMessagePilotWaveforms[slotIx]->size();
@@ -736,16 +736,16 @@ bool RadioModem::decodeRACHMessage(signalVector &wBurst, UMTS::Time wTime, float
 	// if viable correlation, demodulate data on I-channel and send to RACH decoder
 	//if (SNR < detectionThreshold) return false;
 
-	if (channel==complex(0,0)) channel = complex(1e6,1e6); // don't divide by zero.
+	if (channel==fcomplex(0,0)) channel = fcomplex(1e6,1e6); // don't divide by zero.
 
 	signalVector RACHBurst(wBurst);
 	
-	//scaleVector(RACHBurst,complex(1.0,0.0)/channel);
+	//scaleVector(RACHBurst,fcomplex(1.0,0.0)/channel);
 	delayVector(RACHBurst,round(-TOA));
 
 	// FIXME: we should use segment or alias to avoid copy operations
 	signalVector truncBurst(RACHBurst.begin(),0,gSlotLen); 
-        scaleVector(truncBurst,complex(1.0,0.0)/channel);
+        scaleVector(truncBurst,fcomplex(1.0,0.0)/channel);
 
         signalVector descrambledRACH = descrambledRACHFrame.segment(gSlotLen*slotIx,gSlotLen);
 
@@ -808,7 +808,7 @@ bool RadioModem::decodeDCH(signalVector &wBurst,
 			   signalVector &rawBurst,
 			   float &guessTOA,
 			   float &bestTOA,
-			   complex &bestChannel,
+			   fcomplex &bestChannel,
 			   float &bestSNR,
 			   float *TFCI,
                            float *TPC)
@@ -816,7 +816,7 @@ bool RadioModem::decodeDCH(signalVector &wBurst,
 	//LOG(INFO) << "decodeDCH start: " << wTime;
 	// correlate pilots on Q-channel for slot
 	int slotIx = wTime.TN();	
-     	complex channel;
+     	fcomplex channel;
         float TOA;
 	signalVector *uplinkPilots = UplinkPilotWaveforms(uplinkScramblingCodeIndex, 
 							  0,
@@ -841,17 +841,17 @@ bool RadioModem::decodeDCH(signalVector &wBurst,
 	// if viable correlation, demodulate data on I-channel and send to RACH decoder
 	//if (SNR < detectionThreshold) return false;
 
-	if (channel==complex(0,0)) channel = complex(1e6,1e6); // don't divide by zero.
+	if (channel==fcomplex(0,0)) channel = fcomplex(1e6,1e6); // don't divide by zero.
 
 	signalVector rawData = rawBurst.segment(gSlotLen*slotIx,wBurst.size());	
 	wBurst.copyTo(rawData);
 
-	//scaleVector(wBurst,complex(1.0,0.0)/channel);
+	//scaleVector(wBurst,fcomplex(1.0,0.0)/channel);
  	delayVector(wBurst,-TOA); //round(-TOA));
 
 	// FIXME: we should use segment or alias to avoid copy operations
 	signalVector truncBurst(wBurst.begin(),0,gSlotLen); 
-        scaleVector(truncBurst,complex(1.0,0.0)/channel);
+        scaleVector(truncBurst,fcomplex(1.0,0.0)/channel);
 
         if (!mUplinkScramblingCodes[uplinkScramblingCodeIndex])
           mUplinkScramblingCodes[uplinkScramblingCodeIndex] = new UplinkScramblingCode(uplinkScramblingCodeIndex);
@@ -918,7 +918,7 @@ bool RadioModem::decodeDPDCHFrame(DPDCH &frame,
 
         // FIXME: we should use segment or alias to avoid copy operations
         signalVector truncBurst(frame.rawBurst.begin(),0,gFrameLen);
-        scaleVector(truncBurst,complex(1.0,0.0)/frame.bestChannel);
+        scaleVector(truncBurst,fcomplex(1.0,0.0)/frame.bestChannel);
 
         if (!mUplinkScramblingCodes[uplinkScramblingCodeIndex])
           mUplinkScramblingCodes[uplinkScramblingCodeIndex] = new UplinkScramblingCode(uplinkScramblingCodeIndex);
@@ -1009,10 +1009,10 @@ void RadioModem::receiveBurst(void)
 	unsigned int burstLen = gSlotLen+1024+mDelaySpread;
 	signalVector *dataBurst = new signalVector(burstLen);
 	RN_MEMLOG(signalVector,dataBurst);
-  	complex *burstPtr = dataBurst->begin();
+  	fcomplex *burstPtr = dataBurst->begin();
         for (unsigned int i=0; i<burstLen; i++) {
-	  *burstPtr++ = complex((float) ((radioData_t) (signed char) (*rp)), 
-				(float) ((radioData_t) (signed char) (*(rp+1)))); //complex(dataI[i],dataQ[i]);
+	  *burstPtr++ = fcomplex((float) ((radioData_t) (signed char) (*rp)), 
+				(float) ((radioData_t) (signed char) (*(rp+1)))); //fcomplex(dataI[i],dataQ[i]);
 	  rp++; rp++;
         }
 	receiveSlot(dataBurst, UMTS::Time(FN,TN));

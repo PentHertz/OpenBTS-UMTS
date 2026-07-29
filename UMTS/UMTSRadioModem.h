@@ -94,7 +94,7 @@ struct DCHLoopInfo {
         float tpcBits[30];
         bool active;
 	float bestTOA;
-	complex bestChannel;
+	fcomplex bestChannel;
 	float bestSNR;
         float lastTOA;
         float powerMultiplier;
@@ -279,7 +279,7 @@ private:
                                  signalVector *matchedFilter,
                                  unsigned maxTOA,
                                  unsigned startTOA,
-                                 complex *channel,
+                                 fcomplex *channel,
                                  float *TOA);
 
 	/* Accumulate a vector into an existing vector */
@@ -298,7 +298,7 @@ private:
                               radioData_t **rBurstI);
 
 
-	/* Descramble a receive burst...essentially a series of sign changes on array of floats?  Nope, they are complex multiplies.*/
+	/* Descramble a receive burst...essentially a series of sign changes on array of floats?  Nope, they are fcomplex multiplies.*/
 	signalVector* descramble(signalVector &wBurst, int8_t *codeI, int8_t *codeQ, signalVector *retVec = NULL);
 
 	/* Despread a descrambled burst...essentially an integrate(add/subtract) and dump operation on floats. */
@@ -329,7 +329,7 @@ private:
 			   signalVector &rawBurst,
                            float &guessTOA,
                            float &bestTOA,
-                           complex &bestChannel,
+                           fcomplex &bestChannel,
                            float &bestSNR,
                            float *TFCI,
 			   float *TPC);

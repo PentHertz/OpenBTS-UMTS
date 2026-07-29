@@ -90,14 +90,14 @@ RadioInterface::RadioInterface(RadioDevice *wRadio,
   inverseCICFilter->isRealOnly(true);
   inverseCICFilter->setSymmetry(ABSSYM);
   for (int i = 0; i < FILTLEN; i++)  
-    *itr++ = complex(invFilt[i],0.0);
+    *itr++ = fcomplex(invFilt[i],0.0);
   rcvInverseCICFilter = new signalVector(*inverseCICFilter);
   RN_MEMLOG(signalVector,rcvInverseCICFilter);
   rcvInverseCICFilter->isRealOnly(true);
   rcvInverseCICFilter->setSymmetry(ABSSYM);
   itr = rcvInverseCICFilter->begin();
   for (int i = 0; i < FILTLEN; i++)
-    *itr++ = complex(invFiltRcv[i],0.0);
+    *itr++ = fcomplex(invFiltRcv[i],0.0);
   scaleVector(*rcvInverseCICFilter,0.5*127.0/mRadio->fullScaleOutputValue());
 
   txHistoryVector = new signalVector(FILTLEN-1);

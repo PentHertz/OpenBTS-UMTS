@@ -4808,8 +4808,12 @@ install: all
 # (pat) The BOOLEAN.c is buggy, so link to the version that works.
 # (mike) To get 0.9.24 working, the BOOLEAN override here must be disabled,
 # the second override of asn_SET_OF still breaks 0.9.24
+# (claude) These recipes cd into $O, which is created by the $O/$(KEYFILE) rule
+# below.  "all" lists both as prerequisites, so without this dependency a "make -j"
+# runs them concurrently and bugfixes dies with "cd: can't cd to o" before asn1c
+# has created the directory.
 .PHONY: bugfixes
-bugfixes:
+bugfixes: $O/$(KEYFILE)
 	-rm -f $O/BOOLEAN.c
 	cd $O && ln -s ../range_BOOLEAN.c BOOLEAN.c
 	-rm -f $O/asn_SET_OF.h

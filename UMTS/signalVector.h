@@ -29,41 +29,41 @@ enum Symmetry {
 DEFINE_MEMORY_LEAK_DETECTOR_CLASS(signalVector,MemChecksignalVector)
 
 /** the core data structure of the Transceiver */
-class signalVector: public Vector<complex>, public MemChecksignalVector
+class signalVector: public Vector<fcomplex>, public MemChecksignalVector
 {
 
  private:
   
   Symmetry symmetry;   ///< the symmetry of the vector
-  bool realOnly;       ///< true if vector is real-valued, not complex-valued
+  bool realOnly;       ///< true if vector is real-valued, not fcomplex-valued
   
  public:
   
   /** Constructors */
   signalVector(int dSize=0, Symmetry wSymmetry = NONE):
-    Vector<complex>(dSize),
+    Vector<fcomplex>(dSize),
     realOnly(false)
     { 
       symmetry = wSymmetry; 
     };
     
-  signalVector(complex* wData, size_t start, 
+  signalVector(fcomplex* wData, size_t start, 
 	       size_t span, Symmetry wSymmetry = NONE, bool wRealOnly = false):
-    Vector<complex>(NULL,wData+start,wData+start+span),
+    Vector<fcomplex>(NULL,wData+start,wData+start+span),
     realOnly(wRealOnly)
     { 
       symmetry = wSymmetry; 
     };
       
   signalVector(const signalVector &vec1, const signalVector &vec2):
-    Vector<complex>(vec1,vec2),
+    Vector<fcomplex>(vec1,vec2),
     realOnly(false)
     { 
       symmetry = vec1.symmetry; 
     };
 	
   signalVector(const signalVector &wVector):
-    Vector<complex>(wVector.size()),
+    Vector<fcomplex>(wVector.size()),
     realOnly(false)
     {
       wVector.copyTo(*this); 
